@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pydantic
+requests
+openai  # hoặc anthropic
+selenium
+webdriver-manager
+pillow  # Dùng để xử lý ảnh cho Visual Diff
+python-multipart  # Để upload file/nhận ảnh nếu cần
