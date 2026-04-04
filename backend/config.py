@@ -6,7 +6,7 @@ load_dotenv()
 
 class Settings:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-    MODEL_NAME = "gemini-2.5-pro" 
+    MODEL_NAME = "gemini-2.0-flash"
     MAX_RETRIES = 3
     TEMPERATURE = 0
 
