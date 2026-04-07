@@ -1,8 +1,8 @@
 # backend/graph/nodes.py
 from .state import AgentState
 from services.llm_service import get_llm
+from services.selenium_service import take_screenshot_of_react_code
 
-# Lấy instance LLM
 llm = get_llm()
 
 def intent_node(state: AgentState):
@@ -10,48 +10,94 @@ def intent_node(state: AgentState):
     print("🤖 [Intent Node] Đang phân tích yêu cầu...")
     
     prompt = f"""
-    Yêu cầu: {state['input_prompt']}
-    Dữ liệu giao diện: {state['visual_context']}
+    Role: Frontend Architect.
+    User Request: {state['input_prompt']}
+    Visual Data: {state['visual_context']}
     
-    Nhiệm vụ: Phân tích và tóm tắt cấu trúc UI cần thiết.
+    Task: Phân tích yêu cầu và tóm tắt lại cấu trúc UI cần thiết.
+    Đừng viết code ngay, hãy chỉ mô tả kỹ thuật (layout, màu sắc, component).
     """
     response = llm.invoke(prompt)
+    # Lưu kết quả phân tích vào messages để Code Agent đọc sau này
     return {"messages": [f"Intent Analysis: {response.content}"]}
 
-def code_node(state: AgentState):
-    """Agent 2: Sinh code React"""
-    print("👨‍💻 [Code Node] Đang viết code React...")
-    
-    # Xây dựng prompt
-    system_prompt = "Bạn là chuyên gia Frontend React và Tailwind CSS. Viết code sạch, đúng syntax."
-    
-    # Nếu có lỗi từ vòng lặp trước, yêu cầu sửa
-    if state.get("syntax_error"):
-        system_prompt += f"\n⚠️ LỖI PHÁT HIỆN: {state['syntax_error']}\nHãy viết lại code để sửa lỗi này."
 
-    user_request = state['messages'][-1] if state['messages'] else state['input_prompt']
+def code_node(state: AgentState):
+    """Code Agent: Sinh code"""
+    print("👨‍💻 [Code Agent] Đang sinh code...")
     
-    full_prompt = f"{system_prompt}\nYêu cầu chi tiết: {user_request}\nVisual Data: {state['visual_context']}"
+    # Nếu có error_log từ Exception Agent trước đó, prompt sẽ tự hiểu để sửa
+    context = state['messages'][-1] if state['messages'] else state['input_prompt']
     
-    response = llm.invoke(full_prompt)
+    prompt = f"""
+    Role: Expert React Developer.
+    Task: Write React code based on requirements.
+    Requirements: {context}
+    Visual Context: {state['visual_context']}
+    """
     
+    response = llm.invoke(prompt)
     return {
-        "react_code": response.content,
-        "syntax_error": None  # Reset lỗi khi thử lại
+        "react_code": response.content, 
+        "is_valid": False, # Reset về false để đi kiểm tra lại
+        "preview_image_base64": None # Reset ảnh cũ
     }
 
 def validator_node(state: AgentState):
-    """Agent 3: Kiểm tra tính hợp lệ (Syntax cơ bản)"""
-    print("✅ [Validator Node] Đang kiểm tra code...")
+    """Validator Agent: Kiểm tra Syntax + CHẠY THỰC TẾ (Selenium)"""
+    print("✅ [Validator Agent] Đang kiểm thử (Syntax + Selenium)...")
     
     code = state.get("react_code", "")
     
-    # Logic kiểm tra đơn giản (có thể nâng cấp bằng AST checker)
-    if not code or len(code) < 50:
-        return {"is_valid": False, "syntax_error": "Code quá ngắn hoặc bị lỗi trống."}
+    # 1. Kiểm tra Syntax cơ bản
+    if "export default" not in code or len(code) < 50:
+        return {
+            "is_valid": False, 
+            "error_log": "Lỗi cú pháp: Code quá ngắn hoặc thiếu component."
+        }
     
-    if "export default" not in code and "function " not in code:
-        return {"is_valid": False, "syntax_error": "Thiếu khai báo component hoặc export."}
+    # 2. Chạy Selenium (Visual Test)
+    print("   -> Đang chụp ảnh giao diện...")
+    img_b64 = take_screenshot_of_react_code(code)
+    
+    # 3. Đánh giá kết quả Selenium
+    # Ở đây đơn giản hóa: Nếu không lấy được ảnh hoặc ảnh bị lỗi thì coi như Fail
+    if not img_b64:
+        return {
+            "is_valid": False, 
+            "error_log": "Lỗi Runtime: Code không render được trên trình duyệt (Selenium lỗi)."
+        }
+    
+    # Nếu thành công
+    print("   -> Kết quả: PASS")
+    return {
+        "is_valid": True, 
+        "preview_image_base64": img_b64,
+        "error_log": None
+    }
 
-    # Giả lập pass
-    return {"is_valid": True}
+def exception_node(state: AgentState):
+    """Exception Agent: Phân tích lỗi và đưa ra giải pháp sửa chữa"""
+    print("🚨 [Exception Agent] Phát hiện lỗi! Đang phân tích nguyên nhân...")
+    
+    error_msg = state.get("error_log", "Unknown error")
+    
+    # Prompt để Exception Agent phân tích lỗi
+    prompt = f"""
+    Role: Senior Debugger.
+    The generated React code failed the test with the following error:
+    ERROR: {error_msg}
+    
+    Current Code (partial):
+    {state.get('react_code', '')[:200]}...
+    
+    Analyze the error and explain how to fix it in one sentence.
+    """
+    
+    response = llm.invoke(prompt)
+    fix_instruction = response.content
+    
+    # Cập nhật messages để Code Agent lần sau đọc được hướng dẫn sửa
+    return {
+        "messages": [f"⚠️ FIX REQUEST: {fix_instruction}"] 
+    }
