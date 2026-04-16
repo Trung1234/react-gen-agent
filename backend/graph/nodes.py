@@ -1,57 +1,62 @@
 # backend/graph/nodes.py
 from .state import AgentState
 from services.llm_service import get_llm
+from utils.file_loader import load_prompt  # <-- Import hàm mới
 
-# Lấy instance LLM
 llm = get_llm()
 
 def intent_node(state: AgentState):
-    """Agent 1: Phân tích ý định từ prompt và visual context"""
     print("🤖 [Intent Node] Đang phân tích yêu cầu...")
     
-    prompt = f"""
-    Yêu cầu: {state['input_prompt']}
-    Dữ liệu giao diện: {state['visual_context']}
+    # 1. Load prompt từ file MD
+    system_prompt = load_prompt("intent_agent.md")
     
-    Nhiệm vụ: Phân tích và tóm tắt cấu trúc UI cần thiết.
-    """
-    response = llm.invoke(prompt)
+    # 2. Điền biến vào prompt (dùng format)
+    full_prompt = system_prompt.format(
+        user_request=state['input_prompt'],
+        visual_context=state['visual_context']
+    )
+    
+    # 3. Gọi Gemini
+    response = llm.invoke(full_prompt)
+    
     return {"messages": [f"Intent Analysis: {response.content}"]}
 
 def code_node(state: AgentState):
-    """Agent 2: Sinh code React"""
-    print("👨‍💻 [Code Node] Đang viết code React...")
+    print("👨‍💻 [Code Agent] Đang sinh code React...")
     
-    # Xây dựng prompt
-    system_prompt = "Bạn là chuyên gia Frontend React và Tailwind CSS. Viết code sạch, đúng syntax."
+    # Lấy kết quả phân tích từ Intent Agent
+    tech_analysis = state['messages'][-1] if state['messages'] else state['input_prompt']
     
-    # Nếu có lỗi từ vòng lặp trước, yêu cầu sửa
-    if state.get("syntax_error"):
-        system_prompt += f"\n⚠️ LỖI PHÁT HIỆN: {state['syntax_error']}\nHãy viết lại code để sửa lỗi này."
-
-    user_request = state['messages'][-1] if state['messages'] else state['input_prompt']
+    # 1. Load prompt
+    system_prompt = load_prompt("code_agent.md")
     
-    full_prompt = f"{system_prompt}\nYêu cầu chi tiết: {user_request}\nVisual Data: {state['visual_context']}"
+    # 2. Điền biến
+    full_prompt = system_prompt.format(
+        tech_analysis=tech_analysis,
+        visual_context=state['visual_context'],
+        error_log=state.get("error_log", "None") # Truyền lỗi nếu có
+    )
     
     response = llm.invoke(full_prompt)
     
     return {
-        "react_code": response.content,
-        "syntax_error": None  # Reset lỗi khi thử lại
+        "react_code": response.content, 
+        "error_log": None # Reset lỗi
     }
 
-def validator_node(state: AgentState):
-    """Agent 3: Kiểm tra tính hợp lệ (Syntax cơ bản)"""
-    print("✅ [Validator Node] Đang kiểm tra code...")
+def test_agent_node(state: AgentState):
+    print("🧪 [Test Agent] Đang tạo Playwright Test...")
     
-    code = state.get("react_code", "")
+    # 1. Load prompt
+    system_prompt = load_prompt("test_agent.md")
     
-    # Logic kiểm tra đơn giản (có thể nâng cấp bằng AST checker)
-    if not code or len(code) < 50:
-        return {"is_valid": False, "syntax_error": "Code quá ngắn hoặc bị lỗi trống."}
+    # 2. Điền biến
+    full_prompt = system_prompt.format(
+        original_intent=state['input_prompt'],
+        react_code=state.get("react_code", "")
+    )
     
-    if "export default" not in code and "function " not in code:
-        return {"is_valid": False, "syntax_error": "Thiếu khai báo component hoặc export."}
-
-    # Giả lập pass
-    return {"is_valid": True}
+    response = llm.invoke(full_prompt)
+    
+    return {"playwright_test_code": response.content}
