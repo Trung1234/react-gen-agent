@@ -4,37 +4,24 @@ from .state import AgentState
 from . import nodes
 
 def create_graph():
-    # Khởi tạo đồ thị với State đã định nghĩa
     workflow = StateGraph(AgentState)
 
-    # Thêm các node
+    # --- 1. KHAI BÁO CÁC NODE ---
     workflow.add_node("intent_agent", nodes.intent_node)
     workflow.add_node("code_agent", nodes.code_node)
-    workflow.add_node("validator_agent", nodes.validator_node)
+    workflow.add_node("test_agent", nodes.test_agent)
 
-    # Định nghĩa điểm bắt đầu
+    # --- 2. ĐIỂM BẮT ĐẦU ---
     workflow.set_entry_point("intent_agent")
 
-    # Nối các luồng cố định
+    # --- 3. LUỒNG TUYẾN TÍNH (LINEAR FLOW) ---
+    # Không có điều kiện, không có vòng lặp (Loop) nữa
+    # Chạy theo thứ tự: Phân tích -> Viết Code -> Viết Test -> Kết thúc
+    
     workflow.add_edge("intent_agent", "code_agent")
-    workflow.add_edge("code_agent", "validator_agent")
+    workflow.add_edge("code_agent", "test_agent")
+    workflow.add_edge("test_agent", END)
 
-    # Định nghĩa luồng có điều kiện (Nếu lỗi -> quay lại, Nếu đúng -> kết thúc)
-    def decide_next_step(state: AgentState):
-        if state["is_valid"]:
-            return "end"
-        else:
-            return "retry"
-
-    workflow.add_conditional_edges(
-        "validator_agent",
-        decide_next_step,
-        {
-            "retry": "code_agent",  # Quay lại Code Agent để sửa
-            "end": END             # Kết thúc luồng
-        }
-    )
-
-    # Biên dịch
+    # --- 4. BIÊN DỊCH ---
     app = workflow.compile()
     return app
