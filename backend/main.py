@@ -33,8 +33,9 @@ async def generate_code(request: GenerateRequest):
 
         # 3. Trả kết quả
         return GenerateResponse(
-            status="success",
-            code=final_state.get("react_code"),
+             status="success",
+            react_code=final_state.get("react_code"),             # Phải giống tên field ở schemas
+            playwright_test_code=final_state.get("playwright_test_code"), # Phải giống tên field ở schemas
             logs=final_state.get("messages")
         )
 

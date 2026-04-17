@@ -25,7 +25,14 @@ def code_node(state: AgentState):
     
     tech_analysis = state['messages'][-1] if state['messages'] else state['input_prompt']
     
+    # 1. Load prompt
     system_prompt = load_prompt("code_agent.md")
+    
+    # --- DEBUG: In ra prompt xem có rỗng không ---
+    if not system_prompt:
+        print("⚠️ CẢNH BÁO: System prompt bị RỖNG! Hãy kiểm tra file code_agent.md")
+    else:
+        print(f"📄 Prompt length: {len(system_prompt)} chars")
     
     full_prompt = system_prompt.format(
         tech_analysis=tech_analysis,
@@ -35,17 +42,27 @@ def code_node(state: AgentState):
     
     response = llm.invoke(full_prompt)
     
+    # --- DEBUG: In ra kết quả thô từ Azure ---
+    print(f"🔍 Raw Response Type: {type(response)}")
+    print(f"🔍 Raw Response Content (100 chars đầu): {response.content[:100]}")
+    
+    code_result = response.content.strip() if response.content else ""
+    
     return {
-        "react_code": response.content, 
+        "react_code": code_result, 
         "error_log": None
     }
 
 def test_agent(state: AgentState):
-    """Agent 3: Viết Playwright Test Case (Đã sửa tên để khớp workflow.py)"""
+    """Agent 3: Viết Playwright Test Case"""
     print("🧪 [Test Agent] Đang tạo Playwright Test...")
     
     system_prompt = load_prompt("test_agent.md")
     
+    # --- DEBUG ---
+    if not system_prompt:
+        print("⚠️ CẢNH BÁO: System prompt bị RỖNG! Hãy kiểm tra file test_agent.md")
+
     full_prompt = system_prompt.format(
         original_intent=state['input_prompt'],
         react_code=state.get("react_code", "")
@@ -53,4 +70,9 @@ def test_agent(state: AgentState):
     
     response = llm.invoke(full_prompt)
     
-    return {"playwright_test_code": response.content}
+    # --- DEBUG ---
+    print(f"🔍 Raw Test Content (100 chars đầu): {response.content[:100]}")
+    
+    test_result = response.content.strip() if response.content else ""
+    
+    return {"playwright_test_code": test_result}

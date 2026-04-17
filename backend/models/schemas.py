@@ -4,10 +4,10 @@ from typing import Dict, Any, Optional, List
 
 class GenerateRequest(BaseModel):
     prompt: str                  
-    visual_context: Dict[str, Any] 
+    visual_context: dict 
 
 class GenerateResponse(BaseModel):
     status: str                  
-    code: Optional[str]          
-    logs: List[str]              
-    error_message: Optional[str] = None
+    react_code: Optional[str] = None           # <-- Thêm dòng này
+    playwright_test_code: Optional[str] = None # <-- Thêm dòng này
+    logs: List[str] = []                       # Logs
