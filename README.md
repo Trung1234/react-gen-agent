@@ -1,6 +1,7 @@
 ## Project Mermaid
 
-<img width="2048" height="1117" alt="image" src="https://github.com/user-attachments/assets/d7f14e0a-38d7-4b85-849c-2bfd1c80c5be" />
+
+<img width="2025" height="1091" alt="image" src="https://github.com/user-attachments/assets/b553bbf6-8008-473d-8000-46e071fd53e8" />
 
 ## Cấu trúc thư mục (Project Structure)
 
