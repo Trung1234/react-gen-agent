@@ -1,5 +1,6 @@
 fastapi
-uvicorn[standard]
+uvicorn[standard]>=0.30.0
+gunicorn>=23.0.0
 pydantic
 requests
 openai  # hoặc anthropic
