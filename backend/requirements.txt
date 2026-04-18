@@ -8,6 +8,8 @@ webdriver-manager
 pillow  # Dùng để xử lý ảnh cho Visual Diff
 python-multipart  # Để upload file/nhận ảnh nếu cần
 python-dotenv
+langchain-core
+langchain-openai 
 langchain
 langchain-google-genai
 langgraph

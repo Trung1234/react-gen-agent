@@ -20,7 +20,7 @@ st.title("🤖 AI React Code Generator (Figma-like)")
 # Sidebar
 with st.sidebar:
     st.title("Cài đặt")
-    st.write("Backend đang chạy ở: `http://localhost:8000`")
+    st.write("Backend đang chạy ở: ``")
 
 # Main Layout: Chia 2 cột
 col1, col2 = st.columns([1, 1])
