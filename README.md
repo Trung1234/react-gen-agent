@@ -46,7 +46,7 @@ frontend/
     └── styles.css          # Tùy chỉnh CSS cho Streamlit (nếu cần)
 
 ```
- ##  COnfig  on Environment variables
+ ##  COnfig  on Environment variables Azure Aoo Serivce
 ```text
 [
   {
