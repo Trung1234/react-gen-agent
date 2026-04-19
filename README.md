@@ -45,3 +45,51 @@ frontend/
     ├── __init__.py
     ├── helpers.py          # Các hàm xử lý hình ảnh, text chung
     └── styles.css          # Tùy chỉnh CSS cho Streamlit (nếu cần)
+
+```
+ ##  COnfig  on Environment variables Azure Aoo Serivce
+```text
+[
+  {
+    "name": "AZURE_DEPLOYMENT_NAME",
+    "value": "gpt-5.4-mini",
+    "slotSetting": false
+  },
+  {
+    "name": "AZURE_OPENAI_API_KEY",
+    "value": "",
+    "slotSetting": false
+  },
+  {
+    "name": "AZURE_OPENAI_API_VERSION",
+    "value": "2024-12-01-preview",
+    "slotSetting": false
+  },
+  {
+    "name": "AZURE_OPENAI_ENDPOINT",
+    "value": "ht/",
+    "slotSetting": false
+  },
+  {
+    "name": "BACKEND_URL",
+    "value": "https://get",
+    "slotSetting": false
+  },
+  {
+    "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+    "value": "true",
+    "slotSetting": false
+  },
+  {
+    "name": "WEBSITE_RUN_FROM_PACKAGE",
+    "value": "0",
+    "slotSetting": false
+  }
+]
+
+```
+ ##  Startup command  on Stack setting
+```text
+python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+```
