@@ -7,7 +7,7 @@
 
 ```text
 backend/
-├── .env                  # Lưu API Keys (không commit lên Git)
+├── .env                  # Lưu API Keys 
 ├── main.py               # Entry point: Khởi chạy FastAPI Server
 ├── requirements.txt      # Danh sách thư viện cần thiết
 ├── config.py             # Cấu hình hệ thống (tên model, giới hạn, settings)
